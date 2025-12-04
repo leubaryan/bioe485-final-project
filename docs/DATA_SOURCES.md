@@ -1,41 +1,113 @@
-# MRI Data Sources
+# BraTS2020 Dataset - Data Sources
 
-## Where to Find MRI Images
+## Primary Dataset: BraTS2020 from Kaggle
 
-This document provides detailed information about publicly available MRI datasets suitable for tissue segmentation analysis.
+This project uses the **MICCAI Brain Tumor Segmentation Challenge 2020 (BraTS2020)** dataset for brain tumor segmentation analysis.
 
-## Recommended Datasets
+## BraTS2020 Dataset Details
 
-### 1. MICCAI Brain Tumor Segmentation Challenge (BraTS)
+### Kaggle Dataset
 
-**Website:** http://braintumorsegmentation.org/
+**Dataset Name:** `awsaf49/brats20-dataset-training-validation`  
+**Direct Link:** https://www.kaggle.com/datasets/awsaf49/brats20-dataset-training-validation  
+**Dataset Size:** ~6.5 GB (compressed)
 
 **Description:**
-- Annual challenge with brain tumor MRI data
-- Multi-institutional, multi-scanner data
-- High-quality annotations by expert neuroradiologists
+- Brain tumor MRI data from multiple institutions
+- Multi-parametric MRI sequences
+- Expert-annotated tumor segmentations
+- Training and validation splits included
 
-**Data Contents:**
-- T1-weighted (T1)
-- T1-weighted with gadolinium contrast (T1-Gd)
-- T2-weighted (T2)
-- Fluid Attenuated Inversion Recovery (FLAIR)
-- Ground truth segmentations (tumor regions)
+**MRI Modalities (4 sequences per subject):**
+- **T1-weighted (t1.nii.gz)**: Native T1-weighted scan
+- **T1 with contrast enhancement (t1ce.nii.gz)**: T1-weighted with gadolinium contrast
+- **T2-weighted (t2.nii.gz)**: T2-weighted scan
+- **FLAIR (flair.nii.gz)**: Fluid Attenuated Inversion Recovery
 
-**Format:** NIfTI (.nii.gz)
+**Ground Truth Segmentation (seg.nii.gz):**
+- **Label 0**: Background (healthy tissue)
+- **Label 1**: Necrotic and non-enhancing tumor core (NCR/NET)
+- **Label 2**: Peritumoral edema (ED)
+- **Label 4**: GD-enhancing tumor (ET)
 
-**Access:** Registration required
+**Format:** NIfTI compressed (.nii.gz)
 
-**How to Download:**
-1. Visit the BraTS website
-2. Register for an account
-3. Navigate to the data download section
-4. Download training/validation sets
-5. Place files in `data/raw/`
+**Number of Subjects:** 369 training cases
 
 ---
 
-### 2. OASIS (Open Access Series of Imaging Studies)
+## How to Download from Kaggle
+
+### Method 1: Kaggle API (Recommended)
+
+**Step 1: Install Kaggle API**
+```bash
+pip install kaggle
+```
+
+**Step 2: Setup Kaggle Credentials**
+1. Go to https://www.kaggle.com/settings/account
+2. Scroll to "API" section
+3. Click "Create New Token"
+4. This downloads `kaggle.json`
+5. Place `kaggle.json` in:
+   - **Windows**: `C:\Users\YourName\.kaggle\kaggle.json`
+   - **Linux/Mac**: `~/.kaggle/kaggle.json`
+6. Set permissions (Linux/Mac): `chmod 600 ~/.kaggle/kaggle.json`
+
+**Step 3: Download Dataset**
+```bash
+kaggle datasets download -d awsaf49/brats20-dataset-training-validation
+```
+
+**Step 4: Extract to Project**
+```bash
+# Windows PowerShell
+Expand-Archive -Path brats20-dataset-training-validation.zip -DestinationPath "data/raw/"
+
+# Linux/Mac
+unzip brats20-dataset-training-validation.zip -d data/raw/
+```
+
+### Method 2: Manual Download
+
+1. Visit https://www.kaggle.com/datasets/awsaf49/brats20-dataset-training-validation
+2. Click "Download" button (requires Kaggle account)
+3. Extract zip file to `data/raw/` folder
+
+---
+
+## Expected Data Structure
+
+After downloading and extracting, your directory should look like:
+
+```
+data/raw/
+└── BraTS2020_TrainingData/
+    └── MICCAI_BraTS2020_TrainingData/
+        ├── BraTS20_Training_001/
+        │   ├── BraTS20_Training_001_t1.nii.gz
+        │   ├── BraTS20_Training_001_t1ce.nii.gz
+        │   ├── BraTS20_Training_001_t2.nii.gz
+        │   ├── BraTS20_Training_001_flair.nii.gz
+        │   └── BraTS20_Training_001_seg.nii.gz
+        ├── BraTS20_Training_002/
+        │   ├── BraTS20_Training_002_t1.nii.gz
+        │   ├── BraTS20_Training_002_t1ce.nii.gz
+        │   ├── BraTS20_Training_002_t2.nii.gz
+        │   ├── BraTS20_Training_002_flair.nii.gz
+        │   └── BraTS20_Training_002_seg.nii.gz
+        ├── ...
+        └── BraTS20_Training_369/
+```
+
+**Note:** The exact folder structure may vary slightly depending on how you extract the archive. Adjust paths in your code accordingly.
+
+---
+
+## Alternative Datasets (Optional)
+
+### OASIS (Open Access Series of Imaging Studies)
 
 **Website:** https://www.oasis-brains.org/
 
@@ -145,20 +217,70 @@ This document provides detailed information about publicly available MRI dataset
 
 ---
 
-## File Organization
+## Working with BraTS2020 Data
 
-Organize downloaded files in the following structure:
+### Loading a Single Subject
 
+```python
+from src.data_loader import MRIDataLoader
+import matplotlib.pyplot as plt
+
+# Initialize loader
+loader = MRIDataLoader('data/raw/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData')
+
+# Define subject
+subject = 'BraTS20_Training_001'
+base_path = f'data/raw/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData/{subject}'
+
+# Load all modalities
+t1 = loader.load_nifti(f'{base_path}/{subject}_t1.nii.gz')
+t1ce = loader.load_nifti(f'{base_path}/{subject}_t1ce.nii.gz')
+t2 = loader.load_nifti(f'{base_path}/{subject}_t2.nii.gz')
+flair = loader.load_nifti(f'{base_path}/{subject}_flair.nii.gz')
+seg = loader.load_nifti(f'{base_path}/{subject}_seg.nii.gz')
+
+print(f"Volume shape: {t1.shape}")  # Typically (240, 240, 155)
 ```
-data/
-└── raw/
-    ├── subject_001/
-    │   ├── T1.nii.gz
-    │   ├── T2.nii.gz
-    │   └── FLAIR.nii.gz
-    ├── subject_002/
-    │   └── T1.nii.gz
-    └── ...
+
+### Extract and Visualize 2D Slice
+
+```python
+# Extract middle slice
+slice_idx = t1.shape[2] // 2  # Middle axial slice
+
+t1_slice = loader.extract_2d_slice(t1, slice_idx=slice_idx, axis=2)
+t2_slice = loader.extract_2d_slice(t2, slice_idx=slice_idx, axis=2)
+flair_slice = loader.extract_2d_slice(flair, slice_idx=slice_idx, axis=2)
+seg_slice = loader.extract_2d_slice(seg, slice_idx=slice_idx, axis=2)
+
+# Visualize all modalities
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+axes[0, 0].imshow(t1_slice, cmap='gray')
+axes[0, 0].set_title('T1')
+axes[0, 1].imshow(t1ce_slice, cmap='gray')
+axes[0, 1].set_title('T1ce')
+axes[0, 2].imshow(t2_slice, cmap='gray')
+axes[0, 2].set_title('T2')
+axes[1, 0].imshow(flair_slice, cmap='gray')
+axes[1, 0].set_title('FLAIR')
+axes[1, 1].imshow(seg_slice, cmap='jet')
+axes[1, 1].set_title('Ground Truth Segmentation')
+plt.show()
+```
+
+### Prepare Multi-Modal Data for PCA
+
+```python
+# Normalize intensities
+t1_norm = loader.normalize_intensity(t1_slice)
+t2_norm = loader.normalize_intensity(t2_slice)
+flair_norm = loader.normalize_intensity(flair_slice)
+
+# Create multi-channel data matrix
+images = [t1_norm, t2_norm, flair_norm]
+X = loader.prepare_data_matrix(images)
+
+print(f"Data matrix shape: {X.shape}")  # (n_pixels, n_modalities)
 ```
 
 ## Data Preprocessing Steps
