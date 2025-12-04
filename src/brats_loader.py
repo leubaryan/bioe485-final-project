@@ -76,19 +76,28 @@ class BraTSLoader:
         # Load all modalities
         modalities = ['t1', 't1ce', 't2', 'flair']
         for mod in modalities:
-            file_path = subject_path / f"{subject_id}_{mod}.nii.gz"
-            if file_path.exists():
-                data[mod] = self.loader.load_nifti(str(file_path))
+            # Try both .nii.gz and .nii extensions
+            file_path_gz = subject_path / f"{subject_id}_{mod}.nii.gz"
+            file_path_nii = subject_path / f"{subject_id}_{mod}.nii"
+            
+            if file_path_gz.exists():
+                data[mod] = self.loader.load_nifti(str(file_path_gz))
+            elif file_path_nii.exists():
+                data[mod] = self.loader.load_nifti(str(file_path_nii))
             else:
-                logger.warning(f"File not found: {file_path}")
+                logger.warning(f"File not found: {file_path_gz} or {file_path_nii}")
         
         # Load segmentation if requested
         if load_seg:
-            seg_path = subject_path / f"{subject_id}_seg.nii.gz"
-            if seg_path.exists():
-                data['seg'] = self.loader.load_nifti(str(seg_path))
+            seg_path_gz = subject_path / f"{subject_id}_seg.nii.gz"
+            seg_path_nii = subject_path / f"{subject_id}_seg.nii"
+            
+            if seg_path_gz.exists():
+                data['seg'] = self.loader.load_nifti(str(seg_path_gz))
+            elif seg_path_nii.exists():
+                data['seg'] = self.loader.load_nifti(str(seg_path_nii))
             else:
-                logger.warning(f"Segmentation not found: {seg_path}")
+                logger.warning(f"Segmentation not found: {seg_path_gz} or {seg_path_nii}")
         
         logger.info(f"Loaded subject {subject_id} with {len(data)} volumes")
         return data
